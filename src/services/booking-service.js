@@ -2,7 +2,8 @@ const axios=require('axios');
 const {BookingRepository}=require('../repositories');
 
 const db=require('../models');
-const res = require('express/lib/response');
+const {Booking_Status}=require('../utils/common/enums');
+const {BOOKED,CANCELLED,INITIATED,PENDING}=Booking_Status;
 
 const {ServerConfig}=require('../config');
 const { AppError } = require('../utils/errors/app-error');
@@ -32,6 +33,34 @@ async function createBooking(data){
     }
 }
 
+async function makePayment(data){
+    const transaction = await db.sequelize.transaction();
+    try {
+        const bookingDetails=await bookingRepository.get(data.bookingId,transaction);
+        if(bookingDetails.status===CANCELLED){
+            throw new AppError('Booking has already been cancelled',StatusCodes.BAD_REQUEST);
+        }
+        const bookingTime=new Date(bookingDetails.createdAt);
+        const current_time=new Date();
+        if(current_time-bookingTime>900000){
+            await bookingRepository.update(data.bookingId,{status : CANCELLED},transaction);
+            throw new AppError('Booking expired',StatusCodes.BAD_REQUEST);
+        }
+        if(bookingDetails.totalCost!=data.totalCost){
+            throw new AppError('The payment doesn\'t match amount requested',StatusCodes.BAD_REQUEST);
+        }
+        if(bookingDetails.userId!=data.userId){
+            throw new AppError('User corresponding to request doesn\'t match',StatusCodes.BAD_REQUEST);
+        }
+        const response=await bookingRepository.update(data.bookingId,{status : BOOKED},transaction);
+        await transaction.commit();
+    } catch (error) {
+        await transaction.rollback();
+        throw error;
+    }
+}
+
 module.exports={
-  createBooking
+  createBooking,
+  makePayment
 }
