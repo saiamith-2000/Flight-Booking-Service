@@ -1,10 +1,9 @@
 const axios=require('axios');
 const {BookingRepository}=require('../repositories');
-
+const {Op}=require('sequelize');
 const db=require('../models');
 const {Booking_Status}=require('../utils/common/enums');
 const {BOOKED,CANCELLED,INITIATED,PENDING}=Booking_Status;
-
 const {ServerConfig}=require('../config');
 const { AppError } = require('../utils/errors/app-error');
 const { StatusCodes } = require('http-status-codes');
@@ -79,7 +78,22 @@ async function cancelBooking(bookingId){
     }
 }
 
+
+async function cancelOldBookings(timestamp){
+ try {
+    const cut_off_time=Date.now() - 1000 * 300;
+    const current_time=new Date(cut_off_time);
+    const response=await bookingRepository.cancelOldBookings(current_time);
+    return response;
+ } catch (error) {
+    console.log(error);
+ }
+}
+
+
+
 module.exports={
   createBooking,
-  makePayment
+  makePayment,
+  cancelOldBookings
 }
