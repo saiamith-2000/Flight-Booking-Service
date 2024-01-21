@@ -37,18 +37,21 @@ class BookingRepository extends CRUDRepository{
         console.log("in repo");
         const response=await Booking.update({status:CANCELLED},{
             where:{
-                [Op.and]:{
+                [Op.and]:[{
                 status:{
                    [Op.ne]: BOOKED
                 },
                 status:{
                     [Op.ne]: CANCELLED
                  },
+                },
+                {
                 createdAt:{
                     [Op.lt]: timestamp
                 }
-            }
-            }
+                }
+            ]
+        }
         });
         return response;
     }
