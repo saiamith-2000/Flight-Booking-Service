@@ -4,7 +4,7 @@ const {Op}=require('sequelize');
 const db=require('../models');
 const {Booking_Status}=require('../utils/common/enums');
 const {BOOKED,CANCELLED,INITIATED,PENDING}=Booking_Status;
-const {ServerConfig}=require('../config');
+const {ServerConfig,Queue}=require('../config');
 const { AppError } = require('../utils/errors/app-error');
 const { StatusCodes } = require('http-status-codes');
 
@@ -54,6 +54,11 @@ async function makePayment(data){
         }
         const response=await bookingRepository.update(data.bookingId,{status : BOOKED},transaction);
         await transaction.commit();
+        Queue.sendData({
+            recipientEmail:'saiamith2000@gmail.com',
+            subject:'Flight Booked',
+            text:`Booking successfully done for flight ${data.bookingId}`
+        });
     } catch (error) {
         await transaction.rollback();
         throw error;
