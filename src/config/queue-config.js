@@ -1,31 +1,29 @@
-const amqplib=require('amqplib');
+const amqplib = require('amqplib');
 
+let channel, connection;
 
-let channel,connection;
-
-
-async function connectQueue(){
+async function connectQueue() {
     try {
-       connection=await amqplib.connect("amqp://localhost");
-       channel=await connection.createChannel();
-       await channel.assertQueue("noti-queue");
+        // Update the connection URL to use the RabbitMQ container name
+        connection = await amqplib.connect("amqp://rabbitmq-5");
+        channel = await connection.createChannel();
+        await channel.assertQueue("noti-queue");
     } catch (error) {
         console.log(error);
         throw error;
     }
 }
 
-
-async function sendData(data){
-     try {
-        await channel.sendToQueue("noti-queue",Buffer.from(JSON.stringify(data)));
-     } catch (error) {
+async function sendData(data) {
+    try {
+        await channel.sendToQueue("noti-queue", Buffer.from(JSON.stringify(data)));
+    } catch (error) {
         console.log(error);
         throw error;
-     }
+    }
 }
 
-module.exports={
+module.exports = {
     connectQueue,
     sendData
-}
+};

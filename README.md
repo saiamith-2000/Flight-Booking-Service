@@ -29,6 +29,7 @@ Lets take a look inside the `src` folder
  - In the root directory create a `.env` file and add the following env variables
     ```
         PORT=<port number of your choice>
+        FLIGHT_SERVICE=<link of your flight service>
     ```
     ex: 
     ```
@@ -45,4 +46,31 @@ Lets take a look inside the `src` folder
  - To run the server execute
  ```
  npm run dev
+ ```
+
+
+  Docker setup:
+ ```
+
+ docker build -t flight-booking-service .
+
+ ```
+ ```
+
+ docker network create micro-net
+
+ ```
+ ```
+ docker volume create flight-booking-service-modules 
+ docker volume create rabbitmq-data
+ ```
+ ```
+docker run -d --name=rabbitmq --network=micro-net -v rabbitmq-data:/var/lib/rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:management
+ ```
+
+
+ ```
+
+ docker run -it --init -p 4000:4000 --name=flight-booking-service --network micro-net -v "$(pwd)":/developer/nodejs/flight-booking-service -v flight-booking-service-modules:/developer/nodejs/flight-booking-service/node_modules flight-booking-service:latest 
+
  ```
